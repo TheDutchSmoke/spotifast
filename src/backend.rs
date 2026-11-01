@@ -856,6 +856,8 @@ pub enum Command {
     },
     /// The words of a track, from LRCLIB.
     Lyrics(Box<LyricsRequest>),
+    /// Start an explicitly enabled translation, or cancel it when the song changes.
+    TranslateLyrics(Option<Box<TranslationRequest>>),
     /// The account's playlist tree, folders and all, from the session.
     Rootlist,
     /// Internal: a rootlist read completed for this signed-in session.
@@ -970,6 +972,13 @@ pub enum Command {
     },
 }
 
+pub struct TranslationRequest {
+    pub uri: String,
+    pub generation: u64,
+    pub lyrics: crate::lyrics::Lyrics,
+    pub target: String,
+}
+
 pub struct LyricsRequest {
     /// The track the answer is for, so a stale one is ignored.
     pub uri: String,
@@ -1063,6 +1072,12 @@ pub enum Event {
     UpdateChecked {
         manual: bool,
         result: Result<Option<crate::updates::Release>, String>,
+    },
+    /// Optional translated lines for one lyrics request generation.
+    LyricsTranslation {
+        uri: String,
+        generation: u64,
+        result: Result<Vec<String>, crate::lyrics::assistance::Failure>,
     },
     /// Track lyrics, or `None` when unavailable.
     Lyrics {
@@ -1881,6 +1896,7 @@ struct Worker {
     commands: mpsc::UnboundedSender<Command>,
     waker: Waker,
     engine: Option<Arc<Engine>>,
+    lyrics_translation: Option<tokio::task::JoinHandle<()>>,
     /// What the engine is heard at, so the engine that replaces it starts
     /// there. `engine_config` alone knows only the level the app launched
     /// with.
@@ -2007,6 +2023,7 @@ impl Worker {
             commands,
             waker,
             engine: None,
+            lyrics_translation: None,
             heard: None,
             rootlist_pending: false,
             album_type_lookup: AlbumTypeLookup::default(),
@@ -2726,6 +2743,7 @@ impl Worker {
                     });
                 }
                 Command::Lyrics(request) => self.fetch_lyrics(*request),
+                Command::TranslateLyrics(request) => self.translate_lyrics(request),
                 Command::Rootlist => self.fetch_rootlist(),
                 Command::RootlistFinished { generation, result } => {
                     self.on_rootlist_finished(generation, result);
@@ -4731,6 +4749,31 @@ impl Worker {
             result,
         });
         self.start_album_type_lookup();
+    }
+
+    fn translate_lyrics(&mut self, request: Option<Box<TranslationRequest>>) {
+        if let Some(task) = self.lyrics_translation.take() {
+            task.abort();
+        }
+        let Some(request) = request else { return };
+        let http = self.http.client();
+        let events = self.events.clone();
+        let waker = self.waker.clone();
+        self.lyrics_translation = Some(tokio::spawn(async move {
+            let result = match http {
+                Ok(http) => {
+                    crate::lyrics::assistance::translate(&http, &request.lyrics, &request.target)
+                        .await
+                }
+                Err(_) => Err(crate::lyrics::assistance::Failure::Unavailable),
+            };
+            let _ = events.send(Event::LyricsTranslation {
+                uri: request.uri,
+                generation: request.generation,
+                result,
+            });
+            waker.wake();
+        }));
     }
 
     fn fetch_lyrics(&self, request: LyricsRequest) {
