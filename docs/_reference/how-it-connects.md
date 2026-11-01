@@ -273,8 +273,11 @@ out, or a reconnection that gives up stops it.
   included. A song has a 90-second translation budget, each request has ten
   seconds, repeated lines are requested once, and 32 completed songs are kept
   in memory for the run. Turning translation off or changing songs cancels
-  pending work. HTTP 429 pauses requests for `Retry-After`; a daily quota
-  response pauses them for an hour, without discarding completed songs.
+  pending work. Changing the interface language cancels the old target and
+  requests a new translation when enabled. HTTP 429 pauses requests for
+  `Retry-After`; a daily quota response pauses them for an hour. An
+  unrepresentable retry deadline also pauses for an hour, rather than for the
+  rest of the run. Completed songs remain cached.
   Errors leave originals visible and can be retried explicitly.
   Pronunciation guides are computed locally. It also checks
   api.github.com once a day for updates. You can turn off automatic checks in

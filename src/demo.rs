@@ -2885,15 +2885,6 @@ mod tests {
     fn lyric_assistance_toggles_keep_originals_and_share_state_across_views() {
         use crate::lyrics::assistance::Translation;
         use egui::accesskit::{Action as AccessibleAction, Role};
-        fn activate(ctx: &egui::Context, app: &mut App, label: &str) {
-            let tree = accessible_frame(ctx, app, vec![]);
-            let button = accessible_node(&tree, label, Role::Button);
-            accessible_frame(
-                ctx,
-                app,
-                vec![accessible_action(button, AccessibleAction::Click, None)],
-            );
-        }
         for presentation in ["lyrics-controls-toolbar", "lyrics-controls-separate"] {
             let (ctx, mut app) = accessible_app("lyrics-assistance");
             apply_flags(
@@ -2902,39 +2893,97 @@ mod tests {
                 Some(&format!("lyrics-korean,lyrics-assistance,{presentation}")),
             );
             app.lyrics_following = false;
-            for fullscreen in [false, true] {
-                app.lyrics_fullscreen = fullscreen.then_some(false);
-                accessible_frame(&ctx, &mut app, vec![]);
-                for (label, expected) in [
-                    ("Pronunciation", [true, false]),
-                    ("Pronunciation", [true, true]),
-                    ("Translation", [false, true]),
-                    ("Pronunciation", [false, false]),
-                    ("Translation", [true, false]),
-                    ("Pronunciation", [true, true]),
-                ] {
-                    activate(&ctx, &mut app, label);
-                    assert_eq!(
-                        [
-                            app.lyrics_assistance.show_translation,
-                            app.lyrics_assistance.show_pronunciation
-                        ],
-                        expected
+            accessible_frame(&ctx, &mut app, vec![]);
+            for (label, expected) in [
+                ("Pronunciation", [true, false]),
+                ("Pronunciation", [true, true]),
+                ("Translation", [false, true]),
+                ("Pronunciation", [false, false]),
+                ("Translation", [true, false]),
+                ("Pronunciation", [true, true]),
+            ] {
+                // Choices are made in the panel and carried into full screen.
+                app.lyrics_fullscreen = None;
+                let tree = accessible_frame(&ctx, &mut app, vec![]);
+                let button = accessible_node(&tree, label, Role::Button);
+                accessible_frame(
+                    &ctx,
+                    &mut app,
+                    vec![accessible_action(button, AccessibleAction::Click, None)],
+                );
+                assert_eq!(
+                    [
+                        app.lyrics_assistance.show_translation,
+                        app.lyrics_assistance.show_pronunciation
+                    ],
+                    expected
+                );
+                assert!(matches!(
+                    app.lyrics_assistance.translation,
+                    Translation::Ready(_)
+                ));
+                app.lyrics_fullscreen = Some(false);
+                let tree = accessible_frame(&ctx, &mut app, vec![]);
+                for label in ["Translation", "Pronunciation"] {
+                    assert!(
+                        !tree
+                            .nodes
+                            .iter()
+                            .any(|(_, node)| node.role() == Role::Button
+                                && node.label() == Some(label)),
+                        "full screen must not add {label} controls"
                     );
-                    assert!(matches!(
-                        app.lyrics_assistance.translation,
-                        Translation::Ready(_)
-                    ));
-                    let original = match &app.lyrics {
-                        Loadable::Loaded(Some(lyrics)) => &lyrics.lines[0],
-                        _ => panic!("original lyrics disappeared"),
-                    };
-                    assert_eq!(original.text, "밤하늘의 별을 따라 걸어요");
-                    assert_eq!(original.at_ms, Some(40_000));
                 }
+                let text = view_frame(&ctx, &mut app, vec![], App::frame_ui);
+                assert_eq!(
+                    text.iter()
+                        .any(|(text, _)| text == "We walk beneath the stars in the night sky"),
+                    expected[0]
+                );
+                assert_eq!(
+                    text.iter()
+                        .any(|(text, _)| text == "bamhaneurui byeoreul ttara georeoyo"),
+                    expected[1]
+                );
+                assert!(
+                    !text
+                        .iter()
+                        .any(|(text, _)| text.starts_with("MyMemory translation")),
+                    "full screen must not add translation hints"
+                );
+                let original = match &app.lyrics {
+                    Loadable::Loaded(Some(lyrics)) => &lyrics.lines[0],
+                    _ => panic!("original lyrics disappeared"),
+                };
+                assert_eq!(original.text, "밤하늘의 별을 따라 걸어요");
+                assert_eq!(original.at_ms, Some(40_000));
             }
             app.backend.shutdown();
         }
+    }
+
+    #[cfg(feature = "demo")]
+    #[test]
+    fn translation_status_uses_language_names_with_unknown_tag_fallback() {
+        use crate::i18n::Locale;
+        let (ctx, mut app) = accessible_app("translation-language-labels");
+        apply_flags(&mut app, None, Some("lyrics-korean,lyrics-assistance"));
+        for (tag, expected) in [
+            ("en", Locale::English.native_name()),
+            ("pt-BR", Locale::PortugueseBrazil.native_name()),
+            ("zh-Hans", Locale::ChineseSimplified.native_name()),
+            ("unknown-target", "unknown-target"),
+        ] {
+            app.lyrics_assistance.target = tag.into();
+            view_frame(&ctx, &mut app, vec![], App::frame_ui);
+            let text = view_frame(&ctx, &mut app, vec![], App::frame_ui);
+            assert!(
+                text.iter()
+                    .any(|(text, _)| text == &format!("MyMemory translation · {expected}")),
+                "missing status name for {tag}"
+            );
+        }
+        app.backend.shutdown();
     }
 
     #[test]

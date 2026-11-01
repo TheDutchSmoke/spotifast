@@ -10,10 +10,11 @@ use super::Lyrics;
 
 const API: &str = "https://api.mymemory.translated.net/get";
 const CACHE_SIZE: usize = 32;
+const QUOTA_PAUSE: Duration = Duration::from_secs(60 * 60);
 /// Serialize requests and reuse recent songs without spending the daily quota again.
 struct Cache {
     songs: VecDeque<(String, Vec<String>)>,
-    blocked: Option<(Option<tokio::time::Instant>, Failure)>,
+    blocked: Option<(tokio::time::Instant, Failure)>,
 }
 static CACHE: tokio::sync::Mutex<Cache> = tokio::sync::Mutex::const_new(Cache {
     songs: VecDeque::new(),
@@ -177,7 +178,7 @@ pub async fn translate(
         return Ok(lines.clone());
     }
     if let Some((until, failure)) = cache.blocked
-        && until.is_none_or(|until| until > tokio::time::Instant::now())
+        && until > tokio::time::Instant::now()
     {
         return Err(failure);
     }
@@ -197,18 +198,22 @@ pub async fn translate(
         }
         Err(error) => {
             let wait = match error {
-                Failure::DailyLimit => Some(Duration::from_secs(60 * 60)),
+                Failure::DailyLimit => Some(QUOTA_PAUSE),
                 Failure::RateLimited(wait) => Some(wait),
                 _ => None,
             };
             if let Some(wait) = wait {
-                // An unparseable Retry-After is Duration::MAX. Keep the
-                // pause for this run rather than silently bypassing it.
-                cache.blocked = Some((tokio::time::Instant::now().checked_add(wait), error));
+                cache.blocked = Some((pause_deadline(tokio::time::Instant::now(), wait), error));
             }
             Err(error)
         }
     }
+}
+
+/// Preserve valid service deadlines. An unrepresentable wait gets the same
+/// finite pause as the daily quota rather than disabling translation forever.
+fn pause_deadline(now: tokio::time::Instant, wait: Duration) -> tokio::time::Instant {
+    now.checked_add(wait).unwrap_or_else(|| now + QUOTA_PAUSE)
 }
 
 #[derive(Deserialize)]
@@ -336,6 +341,19 @@ mod tests {
             state.translation,
             Translation::Failed(Failure::DailyLimit)
         ));
+    }
+
+    #[test]
+    fn overflowing_retry_after_expires_and_valid_deadlines_are_preserved() {
+        let now = tokio::time::Instant::now();
+        assert_eq!(
+            pause_deadline(now, Duration::MAX),
+            now + Duration::from_secs(3600)
+        );
+        for seconds in [0, 1, 7200, 86_400 * 30] {
+            let wait = Duration::from_secs(seconds);
+            assert_eq!(pause_deadline(now, wait), now + wait);
+        }
     }
 
     async fn server(body: &'static str) -> (String, tokio::task::JoinHandle<String>) {

@@ -64,7 +64,9 @@ Spotifast connects only to the services below.
 - **MyMemory (optional).** **Translation** in Lyrics is off at each launch.
   Enabling it sends each distinct lyric line, its source language and the app's
   language to `api.mymemory.translated.net`, including for subsequent songs
-  opened in Lyrics while it stays enabled. The service sees your IP address.
+  opened in Lyrics while it stays enabled. Without a proxy, MyMemory sees your
+  public IP address. With a configured proxy, it normally sees the proxy's
+  IP address.
   No Spotify grant, account ID or track metadata is included. Requests use the
   configured proxy. Translations are held in memory for up to 32 songs, not
   written to disk. [MyMemory's terms](https://mymemory.translated.net/terms-and-conditions)

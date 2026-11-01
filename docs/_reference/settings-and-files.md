@@ -438,8 +438,9 @@ main fields are:
 
 ## Lyrics translations and pronunciation
 
-Lyrics offers **Translation** and **Pronunciation** in both views. They are
-session choices, initially off, and share state between the panel and full
+The lyrics panel offers **Translation** and **Pronunciation**. Fullscreen
+shows the chosen extra lines without adding controls or status hints. These
+session choices are initially off and share state between the panel and full
 screen. Originals stay visible; each secondary line seeks to its original's
 time. Translation uses MyMemory and the interface language as target. It needs
 Spotify's source-language metadata, or Korean text in LRCLIB/local lyrics.

@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Spotifast\n"
 "Report-Msgid-Bugs-To: https://github.com/crmne/spotifast/issues/new?"
 "template=translation.yml\n"
-"POT-Creation-Date: 2026-11-01 15:30+0100\n"
+"POT-Creation-Date: 2026-11-01 17:03+0100\n"
 "PO-Revision-Date: 2026-09-09 13:30+0000\n"
 "Last-Translator: Spotifast contributors\n"
 "Language-Team: Japanese\n"
@@ -28,12 +28,12 @@ msgstr "{name}を一時停止"
 msgid "Play {name}"
 msgstr "{name}を再生"
 
-#: src/ui/sidebar.rs:302 src/app.rs:3770 src/app.rs:24276
+#: src/ui/sidebar.rs:302 src/app.rs:3770 src/app.rs:24344
 #: src/ui/collection.rs:2269 src/ui/collection.rs:2498
 msgid "Playlist"
 msgstr "プレイリスト"
 
-#: src/ui/sidebar.rs:312 src/ui/friends.rs:304 src/app.rs:3744 src/app.rs:24281
+#: src/ui/sidebar.rs:312 src/ui/friends.rs:304 src/app.rs:3744 src/app.rs:24349
 #: src/ui/collection.rs:2491 src/ui/home.rs:93 src/ui/keys.rs:337
 #: src/ui/winamp/playlist.rs:653
 msgid "Liked Songs"
@@ -222,7 +222,7 @@ msgstr "{name}、フォルダ、展開"
 msgid "Click to change the visualizer"
 msgstr "クリックでビジュアライザーを切り替え"
 
-#: src/ui/player_bar.rs:440 src/ui/lyrics.rs:131 src/ui/lyrics.rs:845
+#: src/ui/player_bar.rs:440 src/ui/lyrics.rs:131 src/ui/lyrics.rs:849
 msgid "Nothing playing"
 msgstr "再生していません"
 
@@ -253,8 +253,8 @@ msgstr "シャッフル"
 msgid "Previous"
 msgstr "前へ"
 
-#: src/ui/player_bar.rs:778 src/ui/lyrics.rs:630 src/ui/widgets.rs:2862
-#: src/ui/widgets.rs:2936 src/ui/widgets.rs:2964 src/app.rs:14193
+#: src/ui/player_bar.rs:778 src/ui/lyrics.rs:634 src/ui/widgets.rs:2862
+#: src/ui/widgets.rs:2936 src/ui/widgets.rs:2964 src/app.rs:14203
 #: src/ui/collection.rs:970
 msgid "Loading…"
 msgstr "読み込み中…"
@@ -308,7 +308,7 @@ msgstr "デバイスに接続"
 msgid "Queue"
 msgstr "再生待ちリスト"
 
-#: src/ui/player_bar.rs:1055 src/ui/lyrics.rs:67 src/ui/lyrics.rs:768
+#: src/ui/player_bar.rs:1055 src/ui/lyrics.rs:67 src/ui/lyrics.rs:772
 msgid "Lyrics"
 msgstr "歌詞"
 
@@ -380,12 +380,12 @@ msgstr "さらに読み込む"
 msgid "Full screen lyrics"
 msgstr "歌詞を全画面表示"
 
-#: src/ui/lyrics.rs:102 src/ui/lyrics.rs:791
+#: src/ui/lyrics.rs:102 src/ui/lyrics.rs:795
 msgctxt "lyrics"
 msgid "Follow"
 msgstr "追従"
 
-#: src/ui/lyrics.rs:132 src/ui/lyrics.rs:846
+#: src/ui/lyrics.rs:132 src/ui/lyrics.rs:850
 msgid "Play a song to see its lyrics."
 msgstr "曲を再生すると歌詞が表示されます。"
 
@@ -410,29 +410,29 @@ msgid "Spotifast will reconnect automatically when your connection returns."
 msgstr "接続が回復すると、Spotifastは自動的に再接続します。"
 
 #. Translators: Keep {error} unchanged. It is the original failure detail.
-#: src/ui/lyrics.rs:171 src/ui/lyrics.rs:623 src/ui/lyrics.rs:859
+#: src/ui/lyrics.rs:171 src/ui/lyrics.rs:627 src/ui/lyrics.rs:863
 #, rust-format
 msgid "Couldn't fetch the lyrics: {error}"
 msgstr "歌詞を取得できませんでした：{error}"
 
-#: src/ui/lyrics.rs:177 src/ui/lyrics.rs:426 src/ui/lyrics.rs:650
-#: src/ui/lyrics.rs:865 src/ui/settings.rs:416 src/ui/settings.rs:709
+#: src/ui/lyrics.rs:177 src/ui/lyrics.rs:430 src/ui/lyrics.rs:654
+#: src/ui/lyrics.rs:869 src/ui/settings.rs:416 src/ui/settings.rs:709
 msgid "Try again"
 msgstr "もう一度試す"
 
-#: src/ui/lyrics.rs:188 src/ui/lyrics.rs:616 src/ui/lyrics.rs:876
+#: src/ui/lyrics.rs:188 src/ui/lyrics.rs:620 src/ui/lyrics.rs:880
 msgid "No lyrics"
 msgstr "歌詞はありません"
 
-#: src/ui/lyrics.rs:189 src/ui/lyrics.rs:617 src/ui/lyrics.rs:877
+#: src/ui/lyrics.rs:189 src/ui/lyrics.rs:621 src/ui/lyrics.rs:881
 msgid "No lyrics found for this track."
 msgstr "この曲の歌詞は見つかりませんでした。"
 
-#: src/ui/lyrics.rs:198 src/ui/lyrics.rs:612 src/ui/lyrics.rs:886
+#: src/ui/lyrics.rs:198 src/ui/lyrics.rs:616 src/ui/lyrics.rs:890
 msgid "Instrumental"
 msgstr "インストゥルメンタル"
 
-#: src/ui/lyrics.rs:199 src/ui/lyrics.rs:613 src/ui/lyrics.rs:887
+#: src/ui/lyrics.rs:199 src/ui/lyrics.rs:617 src/ui/lyrics.rs:891
 msgid "No timed lyrics for this track."
 msgstr "この曲には同期された歌詞がありません。"
 
@@ -454,7 +454,7 @@ msgstr ""
 "MyMemory で {language} に翻訳します。有効な間は歌詞が MyMemory に送信されま"
 "す。品質と1日の利用制限は変動する場合があります。"
 
-#: src/ui/lyrics.rs:361 src/ui/lyrics.rs:399
+#: src/ui/lyrics.rs:361 src/ui/lyrics.rs:403
 msgid "The lyrics source did not provide a language for translation."
 msgstr "歌詞の提供元から翻訳元の言語が指定されていません。"
 
@@ -475,19 +475,19 @@ msgstr "MyMemory で翻訳中…"
 msgid "MyMemory translation · {language}"
 msgstr "MyMemory 翻訳 · {language}"
 
-#: src/ui/lyrics.rs:391
+#: src/ui/lyrics.rs:395
 msgid "MyMemory's free limit was reached. Try again later."
 msgstr "MyMemory の無料利用制限に達しました。後でもう一度お試しください。"
 
-#: src/ui/lyrics.rs:395
+#: src/ui/lyrics.rs:399
 msgid "A lyric line exceeds MyMemory's 500-byte limit."
 msgstr "歌詞の1行が MyMemory の500バイト制限を超えています。"
 
-#: src/ui/lyrics.rs:403
+#: src/ui/lyrics.rs:407
 msgid "Translation is unavailable. Your original lyrics are still here."
 msgstr "翻訳を利用できません。元の歌詞は引き続き表示されます。"
 
-#: src/ui/lyrics.rs:779
+#: src/ui/lyrics.rs:783
 msgid "Leave full screen (Esc)"
 msgstr "全画面表示を終了 (Esc)"
 
@@ -704,7 +704,7 @@ msgstr "再生回数"
 msgid "Sort by duration"
 msgstr "再生時間で並べ替え"
 
-#: src/ui/widgets.rs:2975 src/app.rs:14402 src/app.rs:14416
+#: src/ui/widgets.rs:2975 src/app.rs:14412 src/app.rs:14426
 msgid "Network connection error. Check your connection."
 msgstr "ネットワーク接続エラーです。接続を確認してください。"
 
@@ -949,7 +949,7 @@ msgid "Queue cleared"
 msgstr "再生待ちリストをクリアしました"
 
 #. Translators: Keep {date} unchanged. It is a date in YYYY-MM-DD form.
-#: src/app.rs:6797 src/app.rs:24266
+#: src/app.rs:6797 src/app.rs:24334
 #, rust-format
 msgid "Queue {date}"
 msgstr "再生待ち {date}"
@@ -1194,77 +1194,77 @@ msgstr ""
 "Spotifyではアプリからプレイリストを並べ替えられないため、この順序はこのコン"
 "ピューターに保存されます"
 
-#: src/app.rs:12798
+#: src/app.rs:12808
 msgid "Restarting local playback"
 msgstr "ローカル再生を再起動しています"
 
-#: src/app.rs:12834
+#: src/app.rs:12844
 msgid "Local playback needs Spotify Premium"
 msgstr "ローカル再生にはSpotify Premiumが必要です"
 
-#: src/app.rs:12886
+#: src/app.rs:12896
 msgid "Play history cleared"
 msgstr "再生履歴を消去しました"
 
 #. Translators: {size} is a size in megabytes, such as 12.5.
-#: src/app.rs:12905
+#: src/app.rs:12915
 #, rust-format
 msgid "Cleared {size} MB of artwork"
 msgstr "アートワークを{size} MB削除しました"
 
 #. Translators: {error} is an error message.
-#: src/app.rs:12911
+#: src/app.rs:12921
 #, rust-format
 msgid "Couldn't clear artwork: {error}"
 msgstr "アートワークを削除できませんでした：{error}"
 
-#: src/app.rs:13143
+#: src/app.rs:13153
 msgid "Downloading MilkDrop preset packs"
 msgstr "MilkDropのプリセットパックをダウンロード中"
 
 #. Translators: {name} is the name of a visualizer preset pack.
-#: src/app.rs:13177
+#: src/app.rs:13187
 #, rust-format
 msgid "Downloading {name} presets"
 msgstr "{name}のプリセットをダウンロード中"
 
-#: src/app.rs:14336
+#: src/app.rs:14346
 msgid "Couldn't start playback"
 msgstr "再生を開始できませんでした"
 
-#: src/app.rs:14337
+#: src/app.rs:14347
 msgid "Couldn't pause"
 msgstr "一時停止できませんでした"
 
-#: src/app.rs:14338
+#: src/app.rs:14348
 msgid "Couldn't skip"
 msgstr "スキップできませんでした"
 
-#: src/app.rs:14339
+#: src/app.rs:14349
 msgid "Couldn't go back"
 msgstr "前に戻れませんでした"
 
-#: src/app.rs:14340
+#: src/app.rs:14350
 msgid "Couldn't seek"
 msgstr "再生位置を変更できませんでした"
 
-#: src/app.rs:14341
+#: src/app.rs:14351
 msgid "Couldn't change the volume"
 msgstr "音量を変更できませんでした"
 
-#: src/app.rs:14342
+#: src/app.rs:14352
 msgid "Couldn't change shuffle"
 msgstr "シャッフルを変更できませんでした"
 
-#: src/app.rs:14343
+#: src/app.rs:14353
 msgid "Couldn't change repeat"
 msgstr "リピートを変更できませんでした"
 
-#: src/app.rs:14386 src/ui/mod.rs:438
+#: src/app.rs:14396 src/ui/mod.rs:438
 msgid "Spotify won't let this computer play this song right now."
 msgstr "Spotifyが今このコンピューターでこの曲を再生させてくれません。"
 
-#: src/app.rs:14393
+#: src/app.rs:14403
 msgid ""
 "No audio output device was found. Connect or enable one, then press play "
 "again."
@@ -1272,19 +1272,19 @@ msgstr ""
 "音声出力デバイスが見つかりません。デバイスを接続するか有効にしてから、もう一"
 "度再生してください。"
 
-#: src/app.rs:14407
+#: src/app.rs:14417
 msgid ""
 "Spotify doesn't make this playlist's songs available to third-party apps."
 msgstr ""
 "Spotifyはこのプレイリストの曲をサードパーティ製アプリに提供していません。"
 
-#: src/app.rs:14538
+#: src/app.rs:14548
 msgid "Spotify sign-in expired. Sign in again, then retry the cover upload."
 msgstr ""
 "Spotifyのログインの有効期限が切れました。もう一度ログインしてから、カバーの"
 "アップロードをやり直してください。"
 
-#: src/app.rs:14543
+#: src/app.rs:14553
 msgid ""
 "Spotify refused this cover. Check that you own the playlist, then sign in "
 "again to grant image upload permission. If using a personal app, reconnect "
@@ -1294,12 +1294,12 @@ msgstr ""
 "一度ログインして画像アップロードの権限を許可してください。個人用アプリを使っ"
 "ている場合は、設定でも再接続してください。"
 
-#: src/app.rs:14547
+#: src/app.rs:14557
 msgid "Spotify rejected the image size. Choose a smaller image."
 msgstr "Spotifyが画像サイズを拒否しました。もっと小さい画像を選んでください。"
 
 #. Translators: {error} is an error message.
-#: src/app.rs:14550
+#: src/app.rs:14560
 #, rust-format
 msgid "Couldn't upload the cover: {error}. Try again."
 msgstr ""
@@ -1307,7 +1307,7 @@ msgstr ""
 
 #. Translators: Keep {track} unchanged. It is the name of the song,
 #. playlist, album, or artist the radio is based on, not translated.
-#: src/app.rs:24286 src/app/radio.rs:38
+#: src/app.rs:24354 src/app/radio.rs:38
 #, rust-format
 msgid "{track} Radio"
 msgstr "{track} のラジオ"

@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: Spotifast\n"
 "Report-Msgid-Bugs-To: https://github.com/crmne/spotifast/issues/new?"
 "template=translation.yml\n"
-"POT-Creation-Date: 2026-11-01 15:30+0100\n"
+"POT-Creation-Date: 2026-11-01 17:03+0100\n"
 "PO-Revision-Date: 2026-09-09 13:30+0000\n"
 "Last-Translator: Spotifast contributors\n"
 "Language-Team: Polish\n"
@@ -29,12 +29,12 @@ msgstr "Wstrzymaj {name}"
 msgid "Play {name}"
 msgstr "Odtwórz {name}"
 
-#: src/ui/sidebar.rs:302 src/app.rs:3770 src/app.rs:24276
+#: src/ui/sidebar.rs:302 src/app.rs:3770 src/app.rs:24344
 #: src/ui/collection.rs:2269 src/ui/collection.rs:2498
 msgid "Playlist"
 msgstr "Playlista"
 
-#: src/ui/sidebar.rs:312 src/ui/friends.rs:304 src/app.rs:3744 src/app.rs:24281
+#: src/ui/sidebar.rs:312 src/ui/friends.rs:304 src/app.rs:3744 src/app.rs:24349
 #: src/ui/collection.rs:2491 src/ui/home.rs:93 src/ui/keys.rs:337
 #: src/ui/winamp/playlist.rs:653
 msgid "Liked Songs"
@@ -231,7 +231,7 @@ msgstr "{name}, folder, rozwinięty"
 msgid "Click to change the visualizer"
 msgstr "Kliknij, aby zmienić wizualizację"
 
-#: src/ui/player_bar.rs:440 src/ui/lyrics.rs:131 src/ui/lyrics.rs:845
+#: src/ui/player_bar.rs:440 src/ui/lyrics.rs:131 src/ui/lyrics.rs:849
 msgid "Nothing playing"
 msgstr "Nic nie jest odtwarzane"
 
@@ -262,8 +262,8 @@ msgstr "Odtwarzanie losowe"
 msgid "Previous"
 msgstr "Poprzedni"
 
-#: src/ui/player_bar.rs:778 src/ui/lyrics.rs:630 src/ui/widgets.rs:2862
-#: src/ui/widgets.rs:2936 src/ui/widgets.rs:2964 src/app.rs:14193
+#: src/ui/player_bar.rs:778 src/ui/lyrics.rs:634 src/ui/widgets.rs:2862
+#: src/ui/widgets.rs:2936 src/ui/widgets.rs:2964 src/app.rs:14203
 #: src/ui/collection.rs:970
 msgid "Loading…"
 msgstr "Wczytywanie…"
@@ -317,7 +317,7 @@ msgstr "Połącz z urządzeniem"
 msgid "Queue"
 msgstr "Kolejka"
 
-#: src/ui/player_bar.rs:1055 src/ui/lyrics.rs:67 src/ui/lyrics.rs:768
+#: src/ui/player_bar.rs:1055 src/ui/lyrics.rs:67 src/ui/lyrics.rs:772
 msgid "Lyrics"
 msgstr "Tekst"
 
@@ -389,12 +389,12 @@ msgstr "Wczytaj więcej"
 msgid "Full screen lyrics"
 msgstr "Tekst na pełnym ekranie"
 
-#: src/ui/lyrics.rs:102 src/ui/lyrics.rs:791
+#: src/ui/lyrics.rs:102 src/ui/lyrics.rs:795
 msgctxt "lyrics"
 msgid "Follow"
 msgstr "Śledź"
 
-#: src/ui/lyrics.rs:132 src/ui/lyrics.rs:846
+#: src/ui/lyrics.rs:132 src/ui/lyrics.rs:850
 msgid "Play a song to see its lyrics."
 msgstr "Odtwórz utwór, aby zobaczyć jego tekst."
 
@@ -420,29 +420,29 @@ msgstr ""
 "Spotifast automatycznie połączy się ponownie po przywróceniu połączenia."
 
 #. Translators: Keep {error} unchanged. It is the original failure detail.
-#: src/ui/lyrics.rs:171 src/ui/lyrics.rs:623 src/ui/lyrics.rs:859
+#: src/ui/lyrics.rs:171 src/ui/lyrics.rs:627 src/ui/lyrics.rs:863
 #, rust-format
 msgid "Couldn't fetch the lyrics: {error}"
 msgstr "Nie udało się pobrać tekstu: {error}"
 
-#: src/ui/lyrics.rs:177 src/ui/lyrics.rs:426 src/ui/lyrics.rs:650
-#: src/ui/lyrics.rs:865 src/ui/settings.rs:416 src/ui/settings.rs:709
+#: src/ui/lyrics.rs:177 src/ui/lyrics.rs:430 src/ui/lyrics.rs:654
+#: src/ui/lyrics.rs:869 src/ui/settings.rs:416 src/ui/settings.rs:709
 msgid "Try again"
 msgstr "Spróbuj ponownie"
 
-#: src/ui/lyrics.rs:188 src/ui/lyrics.rs:616 src/ui/lyrics.rs:876
+#: src/ui/lyrics.rs:188 src/ui/lyrics.rs:620 src/ui/lyrics.rs:880
 msgid "No lyrics"
 msgstr "Brak tekstu"
 
-#: src/ui/lyrics.rs:189 src/ui/lyrics.rs:617 src/ui/lyrics.rs:877
+#: src/ui/lyrics.rs:189 src/ui/lyrics.rs:621 src/ui/lyrics.rs:881
 msgid "No lyrics found for this track."
 msgstr "Nie znaleziono tekstu tego utworu."
 
-#: src/ui/lyrics.rs:198 src/ui/lyrics.rs:612 src/ui/lyrics.rs:886
+#: src/ui/lyrics.rs:198 src/ui/lyrics.rs:616 src/ui/lyrics.rs:890
 msgid "Instrumental"
 msgstr "Instrumentalny"
 
-#: src/ui/lyrics.rs:199 src/ui/lyrics.rs:613 src/ui/lyrics.rs:887
+#: src/ui/lyrics.rs:199 src/ui/lyrics.rs:617 src/ui/lyrics.rs:891
 msgid "No timed lyrics for this track."
 msgstr "Brak zsynchronizowanego tekstu tego utworu."
 
@@ -464,7 +464,7 @@ msgstr ""
 "Tłumacz na {language} przez MyMemory. Po włączeniu tekst jest wysyłany do "
 "MyMemory. Jakość i dzienne limity mogą się różnić."
 
-#: src/ui/lyrics.rs:361 src/ui/lyrics.rs:399
+#: src/ui/lyrics.rs:361 src/ui/lyrics.rs:403
 msgid "The lyrics source did not provide a language for translation."
 msgstr "Źródło tekstu nie podało języka do tłumaczenia."
 
@@ -485,19 +485,19 @@ msgstr "Tłumaczenie przez MyMemory…"
 msgid "MyMemory translation · {language}"
 msgstr "Tłumaczenie MyMemory · {language}"
 
-#: src/ui/lyrics.rs:391
+#: src/ui/lyrics.rs:395
 msgid "MyMemory's free limit was reached. Try again later."
 msgstr "Osiągnięto bezpłatny limit MyMemory. Spróbuj ponownie później."
 
-#: src/ui/lyrics.rs:395
+#: src/ui/lyrics.rs:399
 msgid "A lyric line exceeds MyMemory's 500-byte limit."
 msgstr "Wiersz tekstu przekracza limit 500 bajtów MyMemory."
 
-#: src/ui/lyrics.rs:403
+#: src/ui/lyrics.rs:407
 msgid "Translation is unavailable. Your original lyrics are still here."
 msgstr "Tłumaczenie jest niedostępne. Oryginalny tekst pozostaje widoczny."
 
-#: src/ui/lyrics.rs:779
+#: src/ui/lyrics.rs:783
 msgid "Leave full screen (Esc)"
 msgstr "Wyjdź z pełnego ekranu (Esc)"
 
@@ -716,7 +716,7 @@ msgstr "ODTWORZENIA"
 msgid "Sort by duration"
 msgstr "Sortuj według czasu trwania"
 
-#: src/ui/widgets.rs:2975 src/app.rs:14402 src/app.rs:14416
+#: src/ui/widgets.rs:2975 src/app.rs:14412 src/app.rs:14426
 msgid "Network connection error. Check your connection."
 msgstr "Błąd połączenia sieciowego. Sprawdź połączenie."
 
@@ -967,7 +967,7 @@ msgid "Queue cleared"
 msgstr "Kolejka wyczyszczona"
 
 #. Translators: Keep {date} unchanged. It is a date in YYYY-MM-DD form.
-#: src/app.rs:6797 src/app.rs:24266
+#: src/app.rs:6797 src/app.rs:24334
 #, rust-format
 msgid "Queue {date}"
 msgstr "Kolejka {date}"
@@ -1216,77 +1216,77 @@ msgstr ""
 "Spotify nie pozwala aplikacjom zmieniać kolejności Twoich playlist, więc ta "
 "kolejność jest zapisana na tym komputerze"
 
-#: src/app.rs:12798
+#: src/app.rs:12808
 msgid "Restarting local playback"
 msgstr "Ponowne uruchamianie lokalnego odtwarzania"
 
-#: src/app.rs:12834
+#: src/app.rs:12844
 msgid "Local playback needs Spotify Premium"
 msgstr "Lokalne odtwarzanie wymaga Spotify Premium"
 
-#: src/app.rs:12886
+#: src/app.rs:12896
 msgid "Play history cleared"
 msgstr "Wyczyszczono historię odtwarzania"
 
 #. Translators: {size} is a size in megabytes, such as 12.5.
-#: src/app.rs:12905
+#: src/app.rs:12915
 #, rust-format
 msgid "Cleared {size} MB of artwork"
 msgstr "Zwolniono {size} MB okładek"
 
 #. Translators: {error} is an error message.
-#: src/app.rs:12911
+#: src/app.rs:12921
 #, rust-format
 msgid "Couldn't clear artwork: {error}"
 msgstr "Nie udało się wyczyścić okładek: {error}"
 
-#: src/app.rs:13143
+#: src/app.rs:13153
 msgid "Downloading MilkDrop preset packs"
 msgstr "Pobieranie pakietów presetów MilkDrop"
 
 #. Translators: {name} is the name of a visualizer preset pack.
-#: src/app.rs:13177
+#: src/app.rs:13187
 #, rust-format
 msgid "Downloading {name} presets"
 msgstr "Pobieranie presetów {name}"
 
-#: src/app.rs:14336
+#: src/app.rs:14346
 msgid "Couldn't start playback"
 msgstr "Nie udało się rozpocząć odtwarzania"
 
-#: src/app.rs:14337
+#: src/app.rs:14347
 msgid "Couldn't pause"
 msgstr "Nie udało się wstrzymać"
 
-#: src/app.rs:14338
+#: src/app.rs:14348
 msgid "Couldn't skip"
 msgstr "Nie udało się przejść dalej"
 
-#: src/app.rs:14339
+#: src/app.rs:14349
 msgid "Couldn't go back"
 msgstr "Nie udało się cofnąć"
 
-#: src/app.rs:14340
+#: src/app.rs:14350
 msgid "Couldn't seek"
 msgstr "Nie udało się przewinąć"
 
-#: src/app.rs:14341
+#: src/app.rs:14351
 msgid "Couldn't change the volume"
 msgstr "Nie udało się zmienić głośności"
 
-#: src/app.rs:14342
+#: src/app.rs:14352
 msgid "Couldn't change shuffle"
 msgstr "Nie udało się zmienić odtwarzania losowego"
 
-#: src/app.rs:14343
+#: src/app.rs:14353
 msgid "Couldn't change repeat"
 msgstr "Nie udało się zmienić powtarzania"
 
-#: src/app.rs:14386 src/ui/mod.rs:438
+#: src/app.rs:14396 src/ui/mod.rs:438
 msgid "Spotify won't let this computer play this song right now."
 msgstr "Spotify nie pozwala teraz odtworzyć tego utworu na tym komputerze."
 
-#: src/app.rs:14393
+#: src/app.rs:14403
 msgid ""
 "No audio output device was found. Connect or enable one, then press play "
 "again."
@@ -1294,18 +1294,18 @@ msgstr ""
 "Nie znaleziono urządzenia wyjścia dźwięku. Podłącz lub włącz jakieś "
 "urządzenie, a potem ponownie naciśnij Odtwórz."
 
-#: src/app.rs:14407
+#: src/app.rs:14417
 msgid ""
 "Spotify doesn't make this playlist's songs available to third-party apps."
 msgstr "Spotify nie udostępnia utworów z tej playlisty aplikacjom innych firm."
 
-#: src/app.rs:14538
+#: src/app.rs:14548
 msgid "Spotify sign-in expired. Sign in again, then retry the cover upload."
 msgstr ""
 "Logowanie do Spotify wygasło. Zaloguj się ponownie, a potem ponów "
 "przesyłanie okładki."
 
-#: src/app.rs:14543
+#: src/app.rs:14553
 msgid ""
 "Spotify refused this cover. Check that you own the playlist, then sign in "
 "again to grant image upload permission. If using a personal app, reconnect "
@@ -1315,19 +1315,19 @@ msgstr ""
 "potem zaloguj się ponownie, aby przyznać uprawnienie do przesyłania obrazów. "
 "Jeśli używasz osobistej aplikacji, połącz ją ponownie także w Ustawieniach."
 
-#: src/app.rs:14547
+#: src/app.rs:14557
 msgid "Spotify rejected the image size. Choose a smaller image."
 msgstr "Spotify odrzucił rozmiar obrazu. Wybierz mniejszy obraz."
 
 #. Translators: {error} is an error message.
-#: src/app.rs:14550
+#: src/app.rs:14560
 #, rust-format
 msgid "Couldn't upload the cover: {error}. Try again."
 msgstr "Nie udało się przesłać okładki: {error}. Spróbuj ponownie."
 
 #. Translators: Keep {track} unchanged. It is the name of the song,
 #. playlist, album, or artist the radio is based on, not translated.
-#: src/app.rs:24286 src/app/radio.rs:38
+#: src/app.rs:24354 src/app/radio.rs:38
 #, rust-format
 msgid "{track} Radio"
 msgstr "Radio utworu {track}"

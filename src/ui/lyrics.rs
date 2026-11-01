@@ -3,7 +3,7 @@
 use egui::{Align, Color32, Frame, Layout, Margin, Rect, Sense, UiBuilder, pos2, vec2};
 
 use crate::app::App;
-use crate::i18n::{gettext, pgettext};
+use crate::i18n::{Locale, gettext, pgettext};
 use crate::model::{Action, Loadable};
 use crate::theme::{self, Icon};
 
@@ -317,7 +317,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
     app.lyrics_line_shown = Some(active);
 }
 
-/// Both views share the same session choices; neither changes Settings.
+/// Panel controls change session choices, also displayed in full screen.
 fn assistance_controls(
     app: &mut App,
     ui: &mut egui::Ui,
@@ -382,7 +382,11 @@ fn assistance_controls(
             Translation::Loading => Some(gettext(app.locale, "Translating with MyMemory…")),
             Translation::Ready(_) => Some(
                 gettext(app.locale, "MyMemory translation · {language}")
-                    .replace("{language}", &state.target)
+                    .replace(
+                        "{language}",
+                        Locale::from_tag(&state.target)
+                            .map_or(state.target.as_str(), |locale| locale.native_name()),
+                    )
                     .into(),
             ),
             Translation::Failed(error) => Some(match error {
@@ -891,18 +895,14 @@ fn fullscreen_contents(app: &mut App, ui: &mut egui::Ui) {
         Loadable::Loaded(Some(lyrics)) => lyrics.clone(),
     };
 
-    assistance_controls(app, ui, &lyrics, &palette);
     let active = lyrics.active_line(now.position_ms);
     // A Follow click resets the remembered line after drawing. Other frames
     // record the shown line before any line-click action restores following.
-    if !app.actions.iter().any(|action| {
-        matches!(
-            action,
-            Action::FollowLyrics
-                | Action::SetLyricsTranslation(_)
-                | Action::SetLyricsPronunciation(_)
-        )
-    }) {
+    if !app
+        .actions
+        .iter()
+        .any(|action| matches!(action, Action::FollowLyrics))
+    {
         app.actions.push(Action::LyricsLineShown(active));
     }
     let viewport = ui.available_rect_before_wrap();

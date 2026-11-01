@@ -12673,7 +12673,17 @@ impl App {
             }
             Action::SetLanguage(choice) => {
                 self.settings.language = choice;
+                let previous_locale = self.locale;
                 self.locale = choice.resolve();
+                if self.locale != previous_locale {
+                    // Stop the old target before invalidating its generation,
+                    // including when the new request cannot run while offline.
+                    self.backend.send(Command::TranslateLyrics(None));
+                    self.request_lyrics_translation();
+                    if self.lyrics_assistance.show_translation {
+                        self.lyrics_line_shown = None;
+                    }
+                }
                 self.mark_settings_dirty();
                 ctx.request_repaint();
             }
@@ -22915,6 +22925,64 @@ mod tests {
         restarted.backend.shutdown();
         assert_eq!(restarted.locale, Locale::PortugueseBrazil);
         std::fs::remove_dir_all(app.dirs.config.parent().unwrap()).unwrap();
+    }
+
+    #[test]
+    fn language_changes_replace_ready_or_loading_lyric_translations() {
+        use crate::i18n::Locale;
+        use crate::lyrics::assistance::Translation;
+        use crate::settings::LanguageChoice;
+
+        for loading in [false, true] {
+            let mut app = test_app(&format!("lyrics-language-change-{loading}"));
+            app.backend.shutdown();
+            let ctx = egui::Context::default();
+            app.locale = Locale::English;
+            app.offline = false;
+            app.network_reachable = true;
+            app.lyrics_uri = Some("spotify:track:language-test".into());
+            app.lyrics = Loadable::Loaded(crate::lyrics::from_text("[00:01]한글"));
+            app.lyrics_assistance.show_translation = true;
+            app.lyrics_assistance.target = "en".into();
+            app.lyrics_assistance.translation = if loading {
+                Translation::Loading
+            } else {
+                Translation::Ready(vec!["old target".into()])
+            };
+            let old_generation = app.lyrics_assistance.generation;
+            app.lyrics_line_shown = Some(Some(0));
+
+            app.apply(
+                Action::SetLanguage(LanguageChoice::Locale(Locale::Dutch)),
+                &ctx,
+            );
+            assert_eq!(app.lyrics_assistance.target, "nl");
+            assert!(app.lyrics_line_shown.is_none());
+            assert!(matches!(
+                app.lyrics_assistance.translation,
+                Translation::Loading
+            ));
+            assert!(
+                !app.lyrics_assistance
+                    .receive(old_generation, Ok(vec!["stale".into()]))
+            );
+            let generation = app.lyrics_assistance.generation;
+            assert!(
+                app.lyrics_assistance
+                    .receive(generation, Ok(vec!["new target".into()]))
+            );
+
+            // Applying the same resolved locale must not spend the quota again.
+            app.apply(
+                Action::SetLanguage(LanguageChoice::Locale(Locale::Dutch)),
+                &ctx,
+            );
+            assert_eq!(app.lyrics_assistance.generation, generation);
+            assert!(
+                matches!(&app.lyrics_assistance.translation, Translation::Ready(lines) if lines == &["new target"])
+            );
+            std::fs::remove_dir_all(app.dirs.config.parent().unwrap()).unwrap();
+        }
     }
 
     /// What a scan reports when Omarchy is (or is not) followed.

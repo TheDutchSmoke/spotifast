@@ -1,4 +1,4 @@
-//! Compact, independent lyric toggles, shared by the panel and full screen.
+//! Compact, independent toggles for the lyrics panel.
 
 use std::sync::Arc;
 
