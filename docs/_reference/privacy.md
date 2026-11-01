@@ -67,8 +67,10 @@ Spotifast connects only to the services below.
   opened in Lyrics while it stays enabled. The service sees your IP address.
   No Spotify grant, account ID or track metadata is included. Requests use the
   configured proxy. Translations are held in memory for up to 32 songs, not
-  written to disk. [MyMemory's terms](https://mymemory.translated.net/doc/terms.php)
-  apply. Its public translation memory and machine translation can be inaccurate;
+  written to disk. [MyMemory's terms](https://mymemory.translated.net/terms-and-conditions)
+  apply. MyMemory states that submitted text may be stored long term and
+  processed by external translation providers. Its public translation memory
+  and machine translation can be inaccurate;
   free daily limits apply. **Pronunciation** uses local letter tables and sends
   nothing over the network.
 - **GitHub.** Once a day, Spotifast asks GitHub for the latest release. You
