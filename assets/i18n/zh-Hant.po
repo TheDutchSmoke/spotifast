@@ -3930,7 +3930,7 @@ msgstr ""
 #~ msgid "Skin"
 #~ msgstr "面板"
 
-#, rust-format
+#~ #, rust-format
 #~ msgid ""
 #~ "Installed skins are in {folder}. Find more at the Winamp Skin Museum."
 #~ msgstr "已安裝的面板位於 {folder}。可在 Winamp Skin Museum 找到更多面板。"
@@ -3944,7 +3944,7 @@ msgstr ""
 #~ msgid "Random"
 #~ msgstr "隨機"
 
-#, rust-format
+#~ #, rust-format
 #~ msgid ""
 #~ "Now showing {skin}. Another one is picked each time the mini player opens."
 #~ msgstr "目前外觀：{skin}。每次開啟迷你播放器都會換一個。"

@@ -4091,7 +4091,7 @@ msgstr ""
 #~ msgid "Skin"
 #~ msgstr "Skórka"
 
-#, rust-format
+#~ #, rust-format
 #~ msgid ""
 #~ "Installed skins are in {folder}. Find more at the Winamp Skin Museum."
 #~ msgstr ""
@@ -4107,7 +4107,7 @@ msgstr ""
 #~ msgid "Random"
 #~ msgstr "Losowa"
 
-#, rust-format
+#~ #, rust-format
 #~ msgid ""
 #~ "Now showing {skin}. Another one is picked each time the mini player opens."
 #~ msgstr ""
