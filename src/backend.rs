@@ -6392,15 +6392,28 @@ async fn spotify_lyrics(
 ) -> Option<crate::lyrics::Lyrics> {
     let id = uri.strip_prefix("spotify:track:")?;
     let path = cache_dir.join(format!("spotify-{id}.json"));
-    if let Some(cached) = crate::lyrics::cached(&path) {
-        return cached;
-    }
+    let legacy = match crate::lyrics::cached(&path) {
+        Some(Some(lyrics)) if lyrics.translations.is_none() => Some(lyrics),
+        Some(cached) => return cached,
+        None => None,
+    };
+    // Older Spotify caches discarded alternatives. Refresh them once through
+    // the existing read when a session is available, retaining offline fallback.
     let Some(engine) = engine else {
         return crate::lyrics::previously_found(&path);
     };
     match engine.lyrics_json(uri).await {
         Ok(json) => {
-            let found = json.as_ref().and_then(crate::lyrics::from_spotify);
+            let found = json
+                .as_ref()
+                .and_then(crate::lyrics::from_spotify)
+                .or_else(|| {
+                    // A metadata refresh must not erase still-fresh cached words.
+                    legacy.map(|mut lyrics| {
+                        lyrics.translations = Some(Vec::new().into());
+                        lyrics
+                    })
+                });
             crate::lyrics::store(&path, &found);
             found
         }
@@ -9924,6 +9937,10 @@ mod tests {
         let path = root.join("spotify-test.json");
         let found = crate::lyrics::from_text("[00:01.00] A test line");
         crate::lyrics::store(&path, &found);
+        assert_eq!(
+            spotify_lyrics(None, "spotify:track:test", &root).await,
+            found
+        );
         let stale = std::time::SystemTime::now() - Duration::from_secs(60 * 60 * 24 * 60);
         std::fs::File::options()
             .write(true)

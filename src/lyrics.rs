@@ -9,6 +9,7 @@
 //! title.
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -49,15 +50,53 @@ pub struct Line {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Translation {
+    pub language: String,
+    /// One entry for each retained original line, including untranslated gaps.
+    pub lines: Vec<String>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Lyrics {
     pub lines: Vec<Line>,
     /// Every line has a time, so the panel can follow the song.
     pub synced: bool,
     /// The database knows there are no words.
     pub instrumental: bool,
+    /// Spotify's supplied alternatives. None denotes a local/LRCLIB result or
+    /// an older cache; Some(empty) records that Spotify supplied no alternatives.
+    /// Shared so existing UI snapshots do not copy every alternative each frame.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub translations: Option<Arc<[Translation]>>,
 }
 
 impl Lyrics {
+    /// Choose a supplied translation for the interface language. Never guess a
+    /// different region or script when a specific variant was requested.
+    pub fn translated_lines(&self, language: &str) -> Option<&[String]> {
+        let language = canonical_language(language);
+        let alternatives = self.translations.as_ref()?;
+        let aligned = |translation: &&Translation| translation.lines.len() == self.lines.len();
+        let exact = alternatives.iter().filter(aligned).find(|translation| {
+            canonical_language(&translation.language).eq_ignore_ascii_case(language)
+        });
+        let generic = || {
+            // Chinese needs an explicit script; treating zh as either script
+            // can present Simplified text to a Traditional-language interface.
+            let base = language.split('-').next()?;
+            if base.eq_ignore_ascii_case("zh") {
+                return None;
+            }
+            alternatives
+                .iter()
+                .filter(aligned)
+                .find(|translation| translation.language.eq_ignore_ascii_case(base))
+        };
+        exact
+            .or_else(generic)
+            .map(|translation| translation.lines.as_slice())
+    }
+
     /// The line being sung at `position_ms`, or `None` before the first one
     /// starts and for lyrics without timing.
     pub fn active_line(&self, position_ms: u32) -> Option<usize> {
@@ -71,15 +110,25 @@ impl Lyrics {
     }
 }
 
+fn canonical_language(language: &str) -> &str {
+    if language.eq_ignore_ascii_case("zh-CN") || language.eq_ignore_ascii_case("zh-Hans") {
+        "zh-Hans"
+    } else if language.eq_ignore_ascii_case("zh-TW") || language.eq_ignore_ascii_case("zh-Hant") {
+        "zh-Hant"
+    } else {
+        language
+    }
+}
+
 /// Parses Spotify's `color-lyrics` response.
 pub fn from_spotify(json: &serde_json::Value) -> Option<Lyrics> {
     let lyrics = json.get("lyrics")?;
     let synced = lyrics.get("syncType").and_then(|value| value.as_str()) == Some("LINE_SYNCED");
-    let lines: Vec<Line> = lyrics
-        .get("lines")?
-        .as_array()?
+    let raw_lines = lyrics.get("lines")?.as_array()?;
+    let retained: Vec<(usize, Line)> = raw_lines
         .iter()
-        .filter_map(|line| {
+        .enumerate()
+        .filter_map(|(index, line)| {
             let text = line.get("words")?.as_str()?.trim();
             if text.is_empty() || text == "\u{266a}" {
                 return None;
@@ -93,20 +142,52 @@ pub fn from_spotify(json: &serde_json::Value) -> Option<Lyrics> {
                         .or_else(|| value.as_u64().and_then(|n| u32::try_from(n).ok()))
                 })
                 .filter(|_| synced);
-            Some(Line {
-                at_ms,
-                text: text.to_string(),
+            Some((
+                index,
+                Line {
+                    at_ms,
+                    text: text.to_string(),
+                },
+            ))
+        })
+        .collect();
+    if retained.is_empty() {
+        return None;
+    }
+    // The alternatives schema is a language tag and an array of strings,
+    // aligned to the unfiltered Spotify lines. Ignore incomplete/malformed
+    // alternatives without losing usable originals or shifting their timing.
+    let translations = lyrics
+        .get("alternatives")
+        .and_then(|value| value.as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(|alternative| {
+            let language = alternative.get("language")?.as_str()?.trim();
+            if language.is_empty() {
+                return None;
+            }
+            let lines = alternative.get("lines")?.as_array()?;
+            if lines.len() != raw_lines.len() {
+                return None;
+            }
+            let lines: Option<Vec<String>> = retained
+                .iter()
+                .map(|(index, _)| lines[*index].as_str().map(|text| text.trim().to_owned()))
+                .collect();
+            Some(Translation {
+                language: language.to_owned(),
+                lines: lines?,
             })
         })
         .collect();
-    if lines.is_empty() {
-        return None;
-    }
+    let lines: Vec<Line> = retained.into_iter().map(|(_, line)| line).collect();
     let synced = synced && lines.iter().all(|line| line.at_ms.is_some());
     Some(Lyrics {
         lines,
         synced,
         instrumental: false,
+        translations: Some(translations),
     })
 }
 
@@ -343,6 +424,7 @@ impl Record {
                     lines,
                     synced: true,
                     instrumental: false,
+                    translations: None,
                 });
             }
         }
@@ -357,6 +439,7 @@ impl Record {
                 .collect(),
             synced: false,
             instrumental: false,
+            translations: None,
         })
     }
 }
@@ -641,6 +724,7 @@ pub fn from_text(text: &str) -> Option<Lyrics> {
             lines: timed,
             synced: true,
             instrumental: false,
+            translations: None,
         });
     }
     Some(Lyrics {
@@ -654,6 +738,7 @@ pub fn from_text(text: &str) -> Option<Lyrics> {
             .collect(),
         synced: false,
         instrumental: false,
+        translations: None,
     })
 }
 
@@ -1047,6 +1132,7 @@ mod tests {
             lines: parse_lrc("[00:05]a\n[00:10]b\n[00:15]c"),
             synced: true,
             instrumental: false,
+            translations: None,
         };
         assert_eq!(lyrics.active_line(0), None);
         assert_eq!(lyrics.active_line(5_000), Some(0));
@@ -1056,8 +1142,130 @@ mod tests {
             lines: vec![Line::default()],
             synced: false,
             instrumental: false,
+            translations: None,
         };
         assert_eq!(plain.active_line(5_000), None);
+    }
+
+    #[test]
+    fn spotify_alternatives_stay_aligned_when_originals_are_filtered() {
+        let json = serde_json::json!({"lyrics": {
+            "syncType": "LINE_SYNCED",
+            "lines": [
+                {"startTimeMs":"1000", "words":" First "},
+                {"startTimeMs":"1500", "words":""},
+                {"startTimeMs":"1750", "words":"♪"},
+                {"startTimeMs":"2000", "words":"Second"}
+            ],
+            "alternatives": [
+                {"language":"nl", "lines":[" Eerste ", "", "♪", "Tweede"]},
+                {"language":"de", "lines":["too short"]},
+                {"language":"fr", "lines":[null,"","","invalid"]},
+                {"language":"", "lines":["missing language","","","invalid"]}
+            ]
+        }});
+        let lyrics = from_spotify(&json).unwrap();
+        assert_eq!(
+            lyrics
+                .lines
+                .iter()
+                .map(|line| (&*line.text, line.at_ms))
+                .collect::<Vec<_>>(),
+            [("First", Some(1000)), ("Second", Some(2000))]
+        );
+        assert_eq!(lyrics.translated_lines("nl").unwrap(), ["Eerste", "Tweede"]);
+        assert!(lyrics.translated_lines("de").is_none());
+        assert!(lyrics.translated_lines("fr").is_none());
+        assert_eq!(lyrics.translations.unwrap().len(), 1);
+    }
+
+    #[test]
+    fn supplied_translations_match_locales_without_guessing_other_scripts() {
+        let lyrics = Lyrics {
+            lines: vec![Line::default()],
+            translations: Some(
+                [
+                    ("pt", "generic"),
+                    ("pt-BR", "Brazil"),
+                    ("zh-CN", "Simplified"),
+                    ("zh-TW", "Traditional"),
+                    ("de", "German"),
+                    ("ja-Latn", "reading"),
+                ]
+                .into_iter()
+                .map(|(language, text)| Translation {
+                    language: language.into(),
+                    lines: vec![text.into()],
+                })
+                .collect(),
+            ),
+            ..Default::default()
+        };
+        assert_eq!(lyrics.translated_lines("pt-BR").unwrap(), ["Brazil"]);
+        assert_eq!(lyrics.translated_lines("pt-PT").unwrap(), ["generic"]);
+        assert_eq!(lyrics.translated_lines("de-DE").unwrap(), ["German"]);
+        assert_eq!(lyrics.translated_lines("zh-Hans").unwrap(), ["Simplified"]);
+        assert_eq!(lyrics.translated_lines("zh-Hant").unwrap(), ["Traditional"]);
+        assert!(lyrics.translated_lines("ja").is_none());
+        assert!(lyrics.translated_lines("nl").is_none());
+        let mut malformed_cache = lyrics.clone();
+        Arc::make_mut(malformed_cache.translations.as_mut().unwrap())[1]
+            .lines
+            .push("extra".into());
+        assert_eq!(
+            malformed_cache.translated_lines("pt-BR").unwrap(),
+            ["generic"]
+        );
+        let one_region = Lyrics {
+            translations: Some(
+                vec![Translation {
+                    language: "pt-BR".into(),
+                    lines: vec!["Brazil".into()],
+                }]
+                .into(),
+            ),
+            ..lyrics
+        };
+        assert!(one_region.translated_lines("pt-PT").is_none());
+    }
+
+    #[test]
+    fn every_interface_locale_can_select_a_supplied_alternative() {
+        use clap::ValueEnum;
+        let lyrics = Lyrics {
+            lines: vec![Line::default()],
+            translations: Some(
+                crate::i18n::Locale::value_variants()
+                    .iter()
+                    .map(|locale| Translation {
+                        language: locale.tag().into(),
+                        lines: vec![locale.native_name().into()],
+                    })
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+        for locale in crate::i18n::Locale::value_variants() {
+            assert_eq!(
+                lyrics.translated_lines(locale.tag()).unwrap(),
+                [locale.native_name()]
+            );
+        }
+    }
+
+    #[test]
+    fn old_caches_and_checked_empty_alternatives_remain_distinguishable() {
+        let legacy: Lyrics = serde_json::from_str(
+            r#"{"lines":[{"text":"old","at_ms":1000}],"synced":true,"instrumental":false}"#,
+        )
+        .unwrap();
+        assert!(legacy.translations.is_none());
+        assert!(legacy.translated_lines("nl").is_none());
+        let fresh = from_spotify(&serde_json::json!({"lyrics":{"lines":[{"words":"fresh","startTimeMs":"1000"}],"syncType":"LINE_SYNCED"}})).unwrap();
+        assert_eq!(fresh.translations, Some(Vec::new().into()));
+        let restored: Lyrics =
+            serde_json::from_slice(&serde_json::to_vec(&fresh).unwrap()).unwrap();
+        assert_eq!(restored, fresh);
     }
 
     #[test]

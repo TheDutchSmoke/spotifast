@@ -203,6 +203,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
         Loadable::Loaded(Some(lyrics)) => lyrics.clone(),
     };
 
+    let translations = lyrics.translated_lines(app.locale.tag());
     let active = lyrics.active_line(now.position_ms);
     let follow = app.lyrics_following && app.lyrics_line_shown != Some(active);
     // The line being sung is bold and in the accent colour; every other
@@ -250,7 +251,7 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
                 } else {
                     Sense::hover()
                 };
-                let response = if crate::bidi::is_rtl(text) {
+                let mut response = if crate::bidi::is_rtl(text) {
                     let galley = crate::bidi::layout(
                         ui.painter(),
                         text,
@@ -267,6 +268,23 @@ fn contents(app: &mut App, ui: &mut egui::Ui) {
                             .sense(sense),
                     )
                 };
+                if let Some(translation) = translations.and_then(|lines| lines.get(index))
+                    && !translation.is_empty()
+                    && translation != "♪"
+                    && translation != text
+                {
+                    ui.add_space(3.0);
+                    let galley = crate::bidi::layout(
+                        ui.painter(),
+                        translation,
+                        theme::regular(14.0),
+                        blend(palette.secondary, palette.text, lit),
+                        ui.available_width(),
+                        usize::MAX,
+                        None,
+                    );
+                    response = response.union(ui.add(egui::Label::new(galley).sense(sense)));
+                }
                 crate::autoscroll::row(ui, &response);
                 let rect = response.rect;
                 if lyrics.synced

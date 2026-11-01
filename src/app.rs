@@ -12595,7 +12595,11 @@ impl App {
             }
             Action::SetLanguage(choice) => {
                 self.settings.language = choice;
+                let previous_locale = self.locale;
                 self.locale = choice.resolve();
+                if self.locale != previous_locale && self.lyrics_fullscreen.is_none() {
+                    self.lyrics_line_shown = None;
+                }
                 self.mark_settings_dirty();
                 ctx.request_repaint();
             }
@@ -15023,6 +15027,7 @@ mod tests {
                     .collect(),
                 synced: true,
                 instrumental: false,
+                translations: None,
             }));
             if let Some(remote) = &mut app.remote {
                 remote.state.is_playing = false;

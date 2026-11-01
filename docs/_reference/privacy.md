@@ -54,6 +54,10 @@ Spotifast connects only to the services below.
   service, which answers with the account's feed of new releases; when it
   cannot, the Web API is asked for the followed artists and their latest
   albums. The shelf is saved in the same Home cache.
+- **Spotify lyric translations.** The existing lyrics read can include
+  translated lines. The side panel displays a matching interface language
+  when supplied and caches it with the original lyrics. Lyrics are never
+  uploaded to a translation service; no translation model is downloaded.
 - **LRCLIB.** When the lyrics panel is open and neither Spotify nor, for a
   local file, the file itself has lyrics for the song, Spotifast sends its
   artist, title, album and length to [lrclib.net](https://lrclib.net).

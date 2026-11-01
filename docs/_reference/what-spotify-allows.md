@@ -89,7 +89,10 @@ clients. Spotifast uses its session for:
   service Spotify's own clients edit, so the other copies keep their place
   and dates. Without local playback it refuses that removal instead of taking
   every copy.
-- **Lyrics** when Spotify has them.
+- **Lyrics** when Spotify has them. When the same response includes an aligned
+  translation in the interface language, the side panel shows it beneath each
+  original line. Availability depends on the track and language; Spotifast does
+  not generate missing translations or add them to full-screen lyrics.
 - **Artist popular tracks.** The account's market-specific ranking and batched
   track details, with the Web API as fallback when the session cannot
   supply them. This uses librespot's existing metadata support.

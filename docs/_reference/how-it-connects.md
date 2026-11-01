@@ -256,7 +256,10 @@ out, or a reconnection that gives up stops it.
   when a song starts, even when no view on screen is showing it. Linux MPRIS
   carries the Spotify artwork URL for the desktop to resolve and asks for
   nothing extra.
-- Lyrics, in the cache directory, for a month.
+- Lyrics, in the cache directory, for a month. Spotify-supplied
+  translations are stored in the same entry. Older entries that omitted this
+  metadata are refreshed through the existing session read when available;
+  a failed refresh keeps the original lyrics available offline.
 - Liked Songs metadata, scoped to the verified account, in the cache directory.
   This behavior is available since 0.8.0.
   Cached pages less than 15 minutes old need no repeat request. Older cached

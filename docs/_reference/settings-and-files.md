@@ -502,6 +502,11 @@ explicit `--demo-data` directory, its `config/settings.json` and
 sound on this computer with that player bar visualizer on.
 `lyrics-fullscreen-view` and `lyrics-fullscreen-instrumental` draw full-screen
 lyrics, with words or without, at the window's own size.
+`lyrics-spotify-translations` shows invented Korean lyrics with supplied English
+and Dutch alternatives in the side panel. Use `--demo-language en` or `nl` to
+select one; other demo languages retain the originals. Combined with
+`lyrics-fullscreen-view`, it verifies that full-screen lyrics show only originals.
+No translation setting, external service or model is added.
 `eq-user-presets` saves a sample equalizer preset and puts it in use.
 `start-in-tray` shows **Start with your computer** set to **In the tray**;
 demo mode never reads or changes the real login entry.

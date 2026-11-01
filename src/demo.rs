@@ -881,6 +881,7 @@ fn sample_lyrics() -> crate::lyrics::Lyrics {
             .collect(),
         synced: true,
         instrumental: false,
+        translations: None,
     }
 }
 
@@ -1725,6 +1726,38 @@ pub fn apply_flags(app: &mut App, page: Option<&str>, show: Option<&str>) {
                         ascending: false,
                     },
                 );
+            }
+            "lyrics-spotify-translations" => {
+                // Invented, aligned Spotify alternatives. No service is contacted.
+                let originals = [
+                    "밤하늘의 별을 따라 걸어요",
+                    "우리 함께 노래해요",
+                    "바람이 조용히 불어요",
+                    "오늘도 너와 함께해",
+                    "새로운 길을 찾아가요",
+                    "우리 함께 노래해요",
+                    "밤하늘의 별을 따라 걸어요",
+                    "오늘도 너와 함께해",
+                ];
+                let times = [
+                    40_000, 46_500, 53_000, 59_500, 66_000, 72_500, 79_000, 85_500,
+                ];
+                let lines: Vec<_> = originals.iter().zip(times).map(|(words, at)| serde_json::json!({ "startTimeMs": at.to_string(), "words": words })).collect();
+                let response = serde_json::json!({ "lyrics": {
+                    "syncType": "LINE_SYNCED", "lines": lines,
+                    "alternatives": [
+                        { "language": "en", "lines": ["We walk beneath the stars", "We sing together", "A quiet wind is blowing", "Today I am with you", "We search for a new path", "We sing together", "We walk beneath the stars", "Today I am with you"] },
+                        { "language": "nl", "lines": ["We lopen onder de sterren", "We zingen samen", "Een zachte wind waait", "Vandaag ben ik bij jou", "We zoeken een nieuw pad", "We zingen samen", "We lopen onder de sterren", "Vandaag ben ik bij jou"] }
+                    ]
+                }});
+                app.lyrics = Loadable::Loaded(crate::lyrics::from_spotify(&response));
+                app.lyrics_uri = app.now_playing().map(|now| now.uri);
+                app.lyrics_following = true;
+                app.show_lyrics_panel = true;
+                if let Some(remote) = &mut app.remote {
+                    remote.state.progress_ms = Some(84_000);
+                    remote.state.is_playing = false;
+                }
             }
             "lyrics" | "lyrics-fullscreen" => {
                 app.lyrics_uri = app.now_playing().map(|now| now.uri);
@@ -8345,6 +8378,140 @@ mod tests {
             );
             assert!(app.show_queue_panel, "{show} keeps the queue");
         }
+    }
+
+    #[cfg(feature = "demo")]
+    #[test]
+    fn supplied_translations_wrap_seek_and_change_with_the_interface_language() {
+        use crate::{i18n::Locale, settings::LanguageChoice};
+        let (ctx, mut app) = accessible_app("spotify-translations-panel");
+        apply_flags(&mut app, None, Some("lyrics-spotify-translations"));
+        app.lyrics_following = false;
+        app.settings.lyrics_width = 280.0;
+        let size = egui::vec2(900.0, 700.0);
+        view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+        let text = view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+        let (_, rect) = text
+            .iter()
+            .find(|(text, _)| text == "We walk beneath the stars")
+            .unwrap();
+        assert!(rect.left() >= 620.0 && rect.right() <= 900.0, "{rect:?}");
+        let pos = rect.center();
+        view_frame_sized(
+            &ctx,
+            &mut app,
+            pointer_click(pos, egui::PointerButton::Primary),
+            App::frame_ui,
+            size,
+        );
+        assert_eq!(app.now_playing().unwrap().position_ms, 40_000);
+        assert!(app.lyrics_following);
+
+        app.lyrics_following = false;
+        app.lyrics_line_shown = Some(Some(1));
+        app.apply(
+            Action::SetLanguage(LanguageChoice::Locale(Locale::Dutch)),
+            &ctx,
+        );
+        assert_eq!(app.lyrics_line_shown, None);
+        let text = view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+        assert!(
+            text.iter()
+                .any(|(text, _)| text == "We lopen onder de sterren")
+        );
+        assert!(
+            !text
+                .iter()
+                .any(|(text, _)| text == "We walk beneath the stars")
+        );
+        if let Loadable::Loaded(Some(lyrics)) = &mut app.lyrics {
+            std::sync::Arc::make_mut(lyrics.translations.as_mut().unwrap())[1].lines[0] = "Een bijzonder lange vertaalregel die ook bij de minimale paneelbreedte binnen het paneel moet blijven passen en daarom netjes over meerdere regels loopt".into();
+        }
+        let text = view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+        let (_, rect) = text
+            .iter()
+            .find(|(text, _)| text.starts_with("Een bijzonder lange"))
+            .unwrap();
+        assert!(rect.height() > 30.0 && rect.right() <= 900.0, "{rect:?}");
+        app.apply(
+            Action::SetLanguage(LanguageChoice::Locale(Locale::German)),
+            &ctx,
+        );
+        let text = view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+        assert!(
+            !text
+                .iter()
+                .any(|(text, _)| text.starts_with("Een bijzonder lange"))
+        );
+        assert!(
+            text.iter()
+                .any(|(text, _)| text == "밤하늘의 별을 따라 걸어요")
+        );
+        app.backend.shutdown();
+    }
+
+    #[cfg(feature = "demo")]
+    #[test]
+    fn supplied_translations_wrap_in_every_interface_locale() {
+        use clap::ValueEnum;
+        for locale in crate::i18n::Locale::value_variants() {
+            let (ctx, mut app) = accessible_app(&format!("translation-wrap-{}", locale.tag()));
+            apply_flags(&mut app, None, Some("lyrics-spotify-translations"));
+            app.locale = *locale;
+            app.lyrics_following = false;
+            app.settings.lyrics_width = 280.0;
+            let translation = vec![locale.native_name(); 20].join(" ");
+            if let Loadable::Loaded(Some(lyrics)) = &mut app.lyrics {
+                lyrics.translations = Some(
+                    vec![crate::lyrics::Translation {
+                        language: locale.tag().into(),
+                        lines: vec![translation.clone(); lyrics.lines.len()],
+                    }]
+                    .into(),
+                );
+            }
+            for width in [900.0, 1280.0] {
+                let size = egui::vec2(width, 800.0);
+                view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+                let text = view_frame_sized(&ctx, &mut app, vec![], App::frame_ui, size);
+                let (_, rect) = text.iter().find(|(text, _)| text == &translation).unwrap();
+                assert!(
+                    rect.height() > 30.0 && rect.width() <= 256.0,
+                    "{}: {rect:?}",
+                    locale.tag()
+                );
+            }
+            app.backend.shutdown();
+        }
+    }
+
+    #[cfg(feature = "demo")]
+    #[test]
+    fn supplied_translations_never_appear_in_fullscreen() {
+        let (ctx, mut app) = accessible_app("spotify-translations-fullscreen");
+        apply_flags(
+            &mut app,
+            None,
+            Some("lyrics-fullscreen-view,lyrics-spotify-translations"),
+        );
+        app.lyrics_following = false;
+        view_frame(&ctx, &mut app, vec![], App::frame_ui);
+        let text = view_frame(&ctx, &mut app, vec![], App::frame_ui);
+        assert!(
+            text.iter()
+                .any(|(text, _)| text == "밤하늘의 별을 따라 걸어요")
+        );
+        let Loadable::Loaded(Some(lyrics)) = &app.lyrics else {
+            panic!("fixture lyrics")
+        };
+        for translation in lyrics.translations.as_ref().unwrap().iter() {
+            assert!(
+                !text
+                    .iter()
+                    .any(|(text, _)| translation.lines.contains(text))
+            );
+        }
+        app.backend.shutdown();
     }
 
     /// The line being sung sits high in the lyrics, a fifth of the way
