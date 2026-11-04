@@ -744,6 +744,7 @@ pub(crate) fn run() -> eframe::Result<()> {
                     drag: demo_drag,
                     stalls: fastframe_shell::StallWatch::default(),
                     screen_asked: None,
+                    frame_log: FrameLog::wanted(),
                 }))
             });
             creator
@@ -1344,7 +1345,86 @@ struct Shell {
     /// Where the window was when it last asked its monitor's refresh rate,
     /// and when.
     screen_asked: Option<(Option<egui::Rect>, std::time::Instant)>,
+    /// DIAGNOSTIC ONLY: frame timings while SPOTIFAST_FRAME_LOG=1.
+    frame_log: Option<FrameLog>,
 }
+
+/// DIAGNOSTIC ONLY: once a second, the frame interval and the CPU time of
+/// the frames drawn in that second, on stderr and in the log.
+struct FrameLog {
+    last: Option<f64>,
+    started: f64,
+    intervals: Vec<f64>,
+    cpu: Vec<f64>,
+    wheel_events: usize,
+    wheel_frames: usize,
+}
+
+impl FrameLog {
+    fn wanted() -> Option<Self> {
+        (std::env::var("SPOTIFAST_FRAME_LOG").as_deref() == Ok("1")).then(|| Self {
+            last: None,
+            started: 0.0,
+            intervals: Vec::new(),
+            cpu: Vec::new(),
+            wheel_events: 0,
+            wheel_frames: 0,
+        })
+    }
+
+    fn record(&mut self, now: f64, cpu: Option<f32>, renderer: &str, wheel: usize) {
+        self.wheel_events += wheel;
+        if wheel > 0 {
+            self.wheel_frames += 1;
+        }
+        if let Some(last) = self.last {
+            let interval = now - last;
+            // A gap longer than a quarter second is idle, not a slow frame.
+            if interval < 0.25 {
+                self.intervals.push(interval * 1000.0);
+                if let Some(cpu) = cpu {
+                    self.cpu.push(f64::from(cpu) * 1000.0);
+                }
+            }
+        } else {
+            self.started = now;
+        }
+        self.last = Some(now);
+        if now - self.started >= 1.0 {
+            if self.intervals.len() >= 10 {
+                let (avg, p95) = Self::stats(&mut self.intervals);
+                let (cpu_avg, cpu_p95) = Self::stats(&mut self.cpu);
+                let line = format!(
+                    "[FRAMES] renderer={renderer} frames={} fps={:.0} interval_avg_ms={avg:.1} \
+                     interval_p95_ms={p95:.1} cpu_avg_ms={cpu_avg:.1} cpu_p95_ms={cpu_p95:.1} \
+                     wheel_events={} frames_with_wheel={}",
+                    self.intervals.len(),
+                    1000.0 / avg.max(0.001),
+                    self.wheel_events,
+                    self.wheel_frames,
+                );
+                eprintln!("{line}");
+                log::warn!("{line}");
+            }
+            self.intervals.clear();
+            self.cpu.clear();
+            self.wheel_events = 0;
+            self.wheel_frames = 0;
+            self.started = now;
+        }
+    }
+
+    fn stats(values: &mut [f64]) -> (f64, f64) {
+        if values.is_empty() {
+            return (0.0, 0.0);
+        }
+        values.sort_by(f64::total_cmp);
+        let avg = values.iter().sum::<f64>() / values.len() as f64;
+        let index = ((values.len() as f64 * 0.95) as usize).min(values.len() - 1);
+        (avg, values[index])
+    }
+}
+
 
 impl Shell {
     /// Asks the monitor showing the window how often it refreshes, for the
@@ -1604,7 +1684,20 @@ impl eframe::App for Shell {
         self.stalls = stalls;
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        if let Some(log) = &mut self.frame_log {
+            let now = ui.input(|input| input.time);
+            let renderer = if frame.gl().is_some() { "glow" } else { "wgpu" };
+            let wheel = ui.input(|input| {
+                input
+                    .raw
+                    .events
+                    .iter()
+                    .filter(|event| matches!(event, egui::Event::MouseWheel { .. }))
+                    .count()
+            });
+            log.record(now, frame.info().cpu_usage, renderer, wheel);
+        }
         let mut stalls = std::mem::take(&mut self.stalls);
         stalls.ui(|| self.draw(ui));
         self.stalls = stalls;
