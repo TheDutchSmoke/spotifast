@@ -639,7 +639,17 @@ pub(crate) fn run() -> eframe::Result<()> {
         };
         #[cfg(not(feature = "demo"))]
         let options = native_options(false, mini, None, geometry);
-        let options = profile_options(options, window_file.clone());
+        let mut options = profile_options(options, window_file.clone());
+        // DIAGNOSTIC ONLY: SPOTIFAST_VSYNC=0 turns the OpenGL swap's vsync off.
+        if std::env::var("SPOTIFAST_VSYNC").as_deref() == Ok("0") {
+            options.glow_options.vsync = false;
+        }
+        let diag_renderer = std::env::var("SPOTIFAST_RENDERER").unwrap_or_default();
+        eprintln!(
+            "[FRAMES] renderer request={:?} vsync={}",
+            if diag_renderer.is_empty() { "glow" } else { diag_renderer.as_str() },
+            options.glow_options.vsync
+        );
         #[cfg(windows)]
         let thumbbar_enabled = desktop_surfaces && options.viewport.taskbar != Some(false);
         #[cfg(target_os = "linux")]
@@ -726,8 +736,22 @@ pub(crate) fn run() -> eframe::Result<()> {
                 drag: demo_drag,
                 stalls: fastframe_shell::StallWatch::default(),
                 screen_asked: None,
+                frame_log: FrameLog::wanted(),
             }))
         }));
+        // DIAGNOSTIC ONLY: SPOTIFAST_RENDERER=wgpu opens the window with
+        // wgpu (Metal) directly, without fastframe-graphics' glow-first order.
+        #[cfg(target_os = "macos")]
+        if diag_renderer == "wgpu" {
+            let mut options = options.take().expect("one try opens the window");
+            options.renderer = eframe::Renderer::Wgpu;
+            return eframe::run_native(
+                "Spotifast",
+                options,
+                creator.take().expect("one try opens the window"),
+            )
+            .inspect_err(|error| log::error!("Native window failed: {error}"));
+        }
         fastframe_graphics::Graphics::new("Spotifast")
             .help(spotifast::window::DOWNLOAD_PAGE)
             .dialog(move |trouble| spotifast::window::no_window_dialog(locale, trouble))
@@ -1307,6 +1331,71 @@ struct Shell {
     /// Where the window was when it last asked its monitor's refresh rate,
     /// and when.
     screen_asked: Option<(Option<egui::Rect>, std::time::Instant)>,
+    /// DIAGNOSTIC ONLY: frame timings while SPOTIFAST_FRAME_LOG=1.
+    frame_log: Option<FrameLog>,
+}
+
+/// DIAGNOSTIC ONLY: once a second, the frame interval and the CPU time of
+/// the frames drawn in that second, on stderr and in the log.
+struct FrameLog {
+    last: Option<f64>,
+    started: f64,
+    intervals: Vec<f64>,
+    cpu: Vec<f64>,
+}
+
+impl FrameLog {
+    fn wanted() -> Option<Self> {
+        (std::env::var("SPOTIFAST_FRAME_LOG").as_deref() == Ok("1")).then(|| Self {
+            last: None,
+            started: 0.0,
+            intervals: Vec::new(),
+            cpu: Vec::new(),
+        })
+    }
+
+    fn record(&mut self, now: f64, cpu: Option<f32>, renderer: &str) {
+        if let Some(last) = self.last {
+            let interval = now - last;
+            // A gap longer than a quarter second is idle, not a slow frame.
+            if interval < 0.25 {
+                self.intervals.push(interval * 1000.0);
+                if let Some(cpu) = cpu {
+                    self.cpu.push(f64::from(cpu) * 1000.0);
+                }
+            }
+        } else {
+            self.started = now;
+        }
+        self.last = Some(now);
+        if now - self.started >= 1.0 {
+            if self.intervals.len() >= 10 {
+                let (avg, p95) = Self::stats(&mut self.intervals);
+                let (cpu_avg, cpu_p95) = Self::stats(&mut self.cpu);
+                let line = format!(
+                    "[FRAMES] renderer={renderer} frames={} fps={:.0} interval_avg_ms={avg:.1} \
+                     interval_p95_ms={p95:.1} cpu_avg_ms={cpu_avg:.1} cpu_p95_ms={cpu_p95:.1}",
+                    self.intervals.len(),
+                    1000.0 / avg.max(0.001),
+                );
+                eprintln!("{line}");
+                log::warn!("{line}");
+            }
+            self.intervals.clear();
+            self.cpu.clear();
+            self.started = now;
+        }
+    }
+
+    fn stats(values: &mut [f64]) -> (f64, f64) {
+        if values.is_empty() {
+            return (0.0, 0.0);
+        }
+        values.sort_by(f64::total_cmp);
+        let avg = values.iter().sum::<f64>() / values.len() as f64;
+        let index = ((values.len() as f64 * 0.95) as usize).min(values.len() - 1);
+        (avg, values[index])
+    }
 }
 
 impl Shell {
@@ -1567,7 +1656,12 @@ impl eframe::App for Shell {
         self.stalls = stalls;
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        if let Some(log) = &mut self.frame_log {
+            let now = ui.input(|input| input.time);
+            let renderer = if frame.gl().is_some() { "glow" } else { "wgpu" };
+            log.record(now, frame.info().cpu_usage, renderer);
+        }
         let mut stalls = std::mem::take(&mut self.stalls);
         stalls.ui(|| self.draw(ui));
         self.stalls = stalls;

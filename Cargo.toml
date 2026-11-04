@@ -209,6 +209,9 @@ libc = "0.2"
 [target.'cfg(target_os = "macos")'.dependencies]
 # The packaged Dock artwork also identifies unbundled Cargo runs.
 fastframe-dock = { git = "https://github.com/crmne/fastframe", tag = "v0.15.4" }
+# DIAGNOSTIC ONLY (diag/macos-frame-pacing): lets SPOTIFAST_RENDERER=wgpu
+# draw the main window with Metal, to compare frame pacing with OpenGL.
+eframe = { version = "0.36.2", default-features = false, features = ["wgpu"] }
 apple-native-keyring-store = { version = "1.0.2", features = ["keychain"] }
 # The application menus and Dock menu (src/mac_menu.rs). "exception" lets
 # src/mac_touchbar_crash_guard.rs catch a specific AppKit Objective-C
