@@ -1342,6 +1342,8 @@ struct FrameLog {
     started: f64,
     intervals: Vec<f64>,
     cpu: Vec<f64>,
+    wheel_events: usize,
+    wheel_frames: usize,
 }
 
 impl FrameLog {
@@ -1351,10 +1353,16 @@ impl FrameLog {
             started: 0.0,
             intervals: Vec::new(),
             cpu: Vec::new(),
+            wheel_events: 0,
+            wheel_frames: 0,
         })
     }
 
-    fn record(&mut self, now: f64, cpu: Option<f32>, renderer: &str) {
+    fn record(&mut self, now: f64, cpu: Option<f32>, renderer: &str, wheel: usize) {
+        self.wheel_events += wheel;
+        if wheel > 0 {
+            self.wheel_frames += 1;
+        }
         if let Some(last) = self.last {
             let interval = now - last;
             // A gap longer than a quarter second is idle, not a slow frame.
@@ -1374,15 +1382,20 @@ impl FrameLog {
                 let (cpu_avg, cpu_p95) = Self::stats(&mut self.cpu);
                 let line = format!(
                     "[FRAMES] renderer={renderer} frames={} fps={:.0} interval_avg_ms={avg:.1} \
-                     interval_p95_ms={p95:.1} cpu_avg_ms={cpu_avg:.1} cpu_p95_ms={cpu_p95:.1}",
+                     interval_p95_ms={p95:.1} cpu_avg_ms={cpu_avg:.1} cpu_p95_ms={cpu_p95:.1} \
+                     wheel_events={} frames_with_wheel={}",
                     self.intervals.len(),
                     1000.0 / avg.max(0.001),
+                    self.wheel_events,
+                    self.wheel_frames,
                 );
                 eprintln!("{line}");
                 log::warn!("{line}");
             }
             self.intervals.clear();
             self.cpu.clear();
+            self.wheel_events = 0;
+            self.wheel_frames = 0;
             self.started = now;
         }
     }
@@ -1660,7 +1673,15 @@ impl eframe::App for Shell {
         if let Some(log) = &mut self.frame_log {
             let now = ui.input(|input| input.time);
             let renderer = if frame.gl().is_some() { "glow" } else { "wgpu" };
-            log.record(now, frame.info().cpu_usage, renderer);
+            let wheel = ui.input(|input| {
+                input
+                    .raw
+                    .events
+                    .iter()
+                    .filter(|event| matches!(event, egui::Event::MouseWheel { .. }))
+                    .count()
+            });
+            log.record(now, frame.info().cpu_usage, renderer, wheel);
         }
         let mut stalls = std::mem::take(&mut self.stalls);
         stalls.ui(|| self.draw(ui));
